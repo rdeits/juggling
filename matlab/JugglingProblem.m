@@ -202,10 +202,10 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       hold on
       for i = 1:obj.num_balls
         x = ppval(trajs.ball(i), ts);
-        plot(ts, x(3,:), 'b.-');
+        plot(ts, x(3,:), 'r.-');
       end
       x = ppval(trajs.hand(1), ts);
-      plot(ts, x(3,:), 'r.-');
+      plot(ts, x(3,:), 'b.-');
       subplot(212)
       hold on
       for i = 1:obj.num_balls
