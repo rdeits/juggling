@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rdeits/locomotion/drake-distro"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "."
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rdeits/locomotion/lib/tbxmanager/toolboxes/yalmip/R20140915/all/yalmip"
+		}
+	]
+}
