@@ -10,7 +10,7 @@ classdef JugglingProblem < MixedIntegerConvexProgram
     % hand_force_traj;
     hand_ranges;
     breaks;
-    degree = 3;
+    degree = 2;
     g = 9.81;
     ball_mass = 0.1;
   end
@@ -51,21 +51,21 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       obj = obj.addHandForces();
       obj = obj.addHandRanges();
       obj = obj.addContactConstraints();
-      obj = obj.addInitialState();
+      % obj = obj.addInitialState();
       obj = obj.addBallRange();
       obj = obj.addPeriodicity();
 
-      for i = 1:obj.num_balls
-        x0 = ppval(obj.ball_traj(i), 0);
-        obj.symbolic_constraints = [obj.symbolic_constraints,...
-          x0(3) <= 1,...
-          % ppval(obj.ball_traj, 0) == ppval(obj.hand_traj, 0),...
-          abs(ppval(fnder(obj.ball_traj(i), 1), 0)) <= 1,...
-          ];
-      end
+      % for i = 1:obj.num_balls
+      %   x0 = ppval(obj.ball_traj(i), 0);
+      %   obj.symbolic_constraints = [obj.symbolic_constraints,...
+      %     x0(3) <= 1,...
+      %     % ppval(obj.ball_traj, 0) == ppval(obj.hand_traj, 0),...
+      %     % abs(ppval(fnder(obj.ball_traj(i), 1), 0)) <= 1,...
+      %     ];
+      % end
 
       for j = 1:obj.num_hands
-        obj = obj.addSymbolicObjective(sum(sum(squeeze(polyderiv(obj.vars.hand_coefs.symb, 3)).^2, 1)));
+        obj = obj.addSymbolicObjective(sum(sum(squeeze(polyderiv(obj.vars.hand_coefs.symb(:,:,:,j), 2)).^2, 1)));
       end
 
     end
@@ -99,9 +99,11 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           ]);
       end
       for i = 1:obj.num_balls
+        % next = mod(i, obj.num_balls)+1;
+        next = i;
         obj = obj.addSymbolicConstraints([...
-          ppval(obj.ball_traj(i), obj.breaks(1)) == ppval(obj.ball_traj(i), obj.breaks(end)),...
-          ppval(fnder(obj.ball_traj(i), 1), obj.breaks(1)) == ppval(fnder(obj.ball_traj(i), 1), obj.breaks(end)),...
+          ppval(obj.ball_traj(i), obj.breaks(1)) == ppval(obj.ball_traj(next), obj.breaks(end)),...
+          ppval(fnder(obj.ball_traj(i), 1), obj.breaks(1)) == ppval(fnder(obj.ball_traj(next), 1), obj.breaks(end)),...
           ]);
       end
     end
@@ -212,23 +214,26 @@ classdef JugglingProblem < MixedIntegerConvexProgram
         % plot(ts, ppval(trajs.ball(j), ts), 'ro-');
       end
 
+      hand_colors = {'b', 'k'};
       figure(2)
       clf
       subplot(211)
       hold on
       for i = 1:obj.num_balls
         x = ppval(trajs.ball(i), ts);
-        plot(ts, x(3,:), 'r.-');
+        plot(ts, x(3,:), 'r-');
       end
       for j = 1:obj.num_hands
         x = ppval(trajs.hand(j), ts);
-        plot(ts, x(3,:), 'b.-');
+        plot(ts, x(3,:), 'b-', 'Color', hand_colors{j});
       end
       subplot(212)
       hold on
       for i = 1:obj.num_balls
-        x = ppval(trajs.hand_ball_force(i,1), ts);
-        plot(ts, x(3,:), 'b.-');
+        for j = 1:obj.num_hands
+          x = ppval(trajs.hand_ball_force(i,j), ts);
+          plot(ts, x(3,:), 'b-');
+        end
       end
     end
   end

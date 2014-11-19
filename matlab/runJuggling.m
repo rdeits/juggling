@@ -4,7 +4,7 @@ checkDependency('gurobi');
 s = sdpvar(2,3,4);
 numel(s)
 
-p = JugglingProblem(3, 2, 10);
+p = JugglingProblem(3, 2, 9);
 p = p.setup();
 p = p.solve();
 
