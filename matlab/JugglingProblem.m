@@ -183,6 +183,7 @@ classdef JugglingProblem < MixedIntegerConvexProgram
 
       for j = 1:obj.num_hands
         trajs.hand(j) = mkpp(obj.breaks, obj.vars.hand_coefs.value(:,:,:,j), obj.dim);
+        trajs.hand_contact(j) = zoh(obj.breaks, [reshape(sum(obj.vars.contact.value(:,j,:), 1), 1, []), sum(obj.vars.contact.value(:,j,end), 1)]);
       end
       for j = 1:obj.num_balls
         trajs.ball(j) = mkpp(obj.breaks, obj.vars.ball_coefs.value(:,:,:,j), obj.dim);
@@ -192,24 +193,58 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           trajs.hand_ball_force(i,j) = mkpp(obj.breaks, obj.vars.hand_ball_force_coefs.value(:,:,:,i,j), obj.dim);
         end
       end
+
+    end
+
+    function [v, xtraj] = visualize(obj)
+      v = JugglingVisualizer(obj.num_balls, obj.num_hands);
+
+      trajs = obj.extractTrajectories();
+      xtraj = trajs.ball(1);
+      [breaks, coefs, l, k, d] = unmkpp(trajs.ball(1));
+      coefs = reshape(coefs, [d, l, k]);
+      for i = 2:obj.num_balls
+        [~, c2, l, k, d] = unmkpp(trajs.ball(i));
+        c2 = reshape(c2, [d, l, k]);
+        coefs = vertcat(coefs, c2);
+      end
+
+      for j = 1:obj.num_hands
+        [~, c2, l, k, d] = unmkpp(trajs.hand(j));
+        c2 = reshape(c2, [d, l, k]);
+        coefs = vertcat(coefs, c2);
+        [~, c2, l, k, d] = unmkpp(trajs.hand_contact(j));
+        c2 = reshape(c2, [d, l, k]);
+        c2 = cat(3, c2, zeros(1, length(breaks)-1, 2));
+        coefs = vertcat(coefs, c2);
+      end
+
+      xtraj = PPTrajectory(mkpp(breaks, coefs, size(coefs, 1)));
+      xtraj = xtraj.setOutputFrame(v.getInputFrame());
+
+      for k = 1:10
+        breaks = xtraj.getBreaks();
+        xtraj2 = xtraj.shiftTime(breaks(end));
+        xtraj = xtraj.append(xtraj2);
+      end
     end
 
     function draw(obj, h)
-      figure(h);
-      clf;
-      hold on
       trajs = obj.extractTrajectories();
       ts = linspace(obj.breaks(1), obj.breaks(end), 100);
-      for j = 1:obj.num_hands
-        x = ppval(trajs.hand(j), ts);
-        plot3(x(1,:), x(2,:), x(3,:), 'b.-');
-        % plot(ts, ppval(trajs.hand(j), ts), 'b.-');
-      end
-      for j = 1:obj.num_balls
-        x = ppval(trajs.ball(j), ts);
-        plot3(x(1,:), x(2,:), x(3,:), 'ro-');
-        % plot(ts, ppval(trajs.ball(j), ts), 'ro-');
-      end
+      % figure(h);
+      % clf;
+      % hold on
+      % for j = 1:obj.num_hands
+      %   x = ppval(trajs.hand(j), ts);
+      %   plot3(x(1,:), x(2,:), x(3,:), 'b.-');
+      %   % plot(ts, ppval(trajs.hand(j), ts), 'b.-');
+      % end
+      % for j = 1:obj.num_balls
+      %   x = ppval(trajs.ball(j), ts);
+      %   plot3(x(1,:), x(2,:), x(3,:), 'ro-');
+      %   % plot(ts, ppval(trajs.ball(j), ts), 'ro-');
+      % end
 
       hand_colors = {'b', 'k'};
       figure(2)
