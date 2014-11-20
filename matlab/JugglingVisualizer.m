@@ -26,6 +26,7 @@ classdef JugglingVisualizer < Visualizer
       obj.inputFrame = inputFrame;
       obj.num_balls = num_balls;
       obj.num_hands = num_hands;
+      view(7, 10);
     end
 
     function drawWrapper(obj,t,y)
@@ -38,7 +39,9 @@ classdef JugglingVisualizer < Visualizer
     end
 
     function draw(obj, t, x)
-      [az, el] = view();
+      % [az, el] = view();
+      az = 7;
+      el = 10;
       cla
       hold on
 
@@ -56,8 +59,8 @@ classdef JugglingVisualizer < Visualizer
         end
         plot3(p.(sprintf('hand_%d_x', j)), p.(sprintf('hand_%d_y', j)), p.(sprintf('hand_%d_z', j)), 'bo', style{:});
       end
-      xlim([-0.5, 0.5])
-      ylim([0, 1])
+      xlim([0, 1])
+      ylim([-0.5, 0.5])
       zlim([-0.25, 1.5])
       % axis equal
       view(az, el);
