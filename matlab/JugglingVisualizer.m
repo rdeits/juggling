@@ -3,6 +3,8 @@ classdef JugglingVisualizer < Visualizer
     num_hands;
     num_balls;
     inputFrame;
+    hand_colors = {'b', 'k'};
+    ball_colors = {'r', 'm', 'g', 'c'};
   end
 
   methods
@@ -26,7 +28,6 @@ classdef JugglingVisualizer < Visualizer
       obj.inputFrame = inputFrame;
       obj.num_balls = num_balls;
       obj.num_hands = num_hands;
-      view(7, 10);
     end
 
     function drawWrapper(obj,t,y)
@@ -39,23 +40,28 @@ classdef JugglingVisualizer < Visualizer
     end
 
     function draw(obj, t, x)
-      % [az, el] = view();
-      az = 7;
-      el = 10;
+      persistent has_set_view
+      if isempty(has_set_view)
+        az = 7;
+        el = 10;
+        has_set_view = true;
+      else
+        [az, el] = view();
+      end
       cla
       hold on
 
       p = Point(obj.inputFrame, x);
 
       for i = 1:obj.num_balls
-        plot3(p.(sprintf('ball_%d_x', i)), p.(sprintf('ball_%d_y', i)), p.(sprintf('ball_%d_z', i)), 'ro');
+        plot3(p.(sprintf('ball_%d_x', i)), p.(sprintf('ball_%d_y', i)), p.(sprintf('ball_%d_z', i)), 'ro', 'Color', obj.ball_colors{i}, 'MarkerFaceColor', obj.ball_colors{i});
       end
 
       for j = 1:obj.num_hands
         if p.(sprintf('hand_%d_contact', j))
-          style = {'MarkerFaceColor', 'b'};
+          style = {'Color', obj.hand_colors{j}, 'MarkerFaceColor', obj.hand_colors{j}};
         else
-          style = {};
+          style = {'Color', obj.hand_colors{j}};
         end
         plot3(p.(sprintf('hand_%d_x', j)), p.(sprintf('hand_%d_y', j)), p.(sprintf('hand_%d_z', j)), 'bo', style{:});
       end

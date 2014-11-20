@@ -62,7 +62,9 @@ classdef JugglingProblem < MixedIntegerConvexProgram
 
 
       for j = 1:obj.num_hands
-        obj = obj.addSymbolicObjective(sum(sum(squeeze(polyderiv(obj.vars.hand_coefs.symb(:,:,:,j), 2)./6).^2, 1)));
+        % obj = obj.addSymbolicObjective(sum(sum(sum(polyderiv(obj.vars.hand_coefs.symb(:,:,:,j), 2).^2)))/1e4);
+        obj = obj.addSymbolicObjective(sum(sum(sum(abs(polyderiv(obj.vars.hand_coefs.symb(:,:,:,j), 2)))))/1e4);
+        % obj = obj.addSymbolicObjective(sum(sum(squeeze(polyderiv(obj.vars.hand_coefs.symb(:,:,:,j), 2)./6).^2, 1)));
       end
 
     end
@@ -96,8 +98,8 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           ]);
       end
       for i = 1:obj.num_balls
-        % next = mod(i, obj.num_balls)+1;
-        next = i;
+        next = mod(i, obj.num_balls)+1;
+        % next = i;
         obj = obj.addSymbolicConstraints([...
           ppval(obj.ball_traj(i), obj.breaks(1)) == ppval(obj.ball_traj(next), obj.breaks(end)),...
           ppval(fnder(obj.ball_traj(i), 1), obj.breaks(1)) == ppval(fnder(obj.ball_traj(next), 1), obj.breaks(end)),...
@@ -167,10 +169,12 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           x0 = ppval(obj.ball_traj(i), (k-1)*obj.dt);
           x1 = ppval(obj.ball_traj(i), (k)*obj.dt);
           obj.symbolic_constraints = [obj.symbolic_constraints,...
-            [-1; -1; 0] <= x0,...
-            x0 <= [2; 1; inf],...
-            [-1; -1; 0] <= x1,...
-            x1 <= [2; 1; inf],...
+            x0(3) >= 0,...
+            x1(3) >= 0,...
+            % [-1; -1; 0] <= x0,...
+            % x0 <= [2; 1; inf],...
+            % [-1; -1; 0] <= x1,...
+            % x1 <= [2; 1; inf],...
             ];
         end
       end
@@ -218,14 +222,34 @@ classdef JugglingProblem < MixedIntegerConvexProgram
         coefs = vertcat(coefs, c2);
       end
 
+      base_coefs = coefs;
+      base_breaks = breaks;
+      for k = 1:15
+        new_breaks = base_breaks;
+        new_breaks = new_breaks + (breaks(end)-breaks(1));
+
+        new_coefs = base_coefs;
+        for i = 1:obj.num_balls
+          if i == 1
+            prev = obj.num_balls;
+          else
+            prev = i - 1;
+          end
+          new_coefs(obj.dim*(i-1) + (1:obj.dim),:,:) = base_coefs(obj.dim*(prev-1) + (1:obj.dim),:,:);
+        end
+        base_coefs = new_coefs;
+        coefs = horzcat(coefs, new_coefs);
+        breaks = horzcat(breaks, new_breaks(2:end));
+      end
+
       xtraj = PPTrajectory(mkpp(breaks, coefs, size(coefs, 1)));
       xtraj = xtraj.setOutputFrame(v.getInputFrame());
 
-      for k = 1:10
-        breaks = xtraj.getBreaks();
-        xtraj2 = xtraj.shiftTime(breaks(end));
-        xtraj = xtraj.append(xtraj2);
-      end
+      % for k = 1:4 % each loop doubles the length of xtraj
+      %   breaks = xtraj.getBreaks();
+      %   xtraj2 = xtraj.shiftTime(breaks(end));
+      %   xtraj = xtraj.append(xtraj2);
+      % end
     end
 
     function draw(obj, h)

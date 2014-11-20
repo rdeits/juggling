@@ -1,10 +1,10 @@
 function obj = runJuggling();
 checkDependency('gurobi');
 
-s = sdpvar(2,3,4);
+s = sdpvar(2, 1,6);
 numel(s)
 
-obj = JugglingProblem(3, 2, 9);
+obj = JugglingProblem(3, 2, 10);
 obj = obj.setup();
 obj = obj.solve();
 
