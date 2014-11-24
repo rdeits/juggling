@@ -254,29 +254,11 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       xtraj = PPTrajectory(mkpp(breaks, coefs, size(coefs, 1)));
       xtraj = xtraj.setOutputFrame(v.getInputFrame());
 
-      % for k = 1:4 % each loop doubles the length of xtraj
-      %   breaks = xtraj.getBreaks();
-      %   xtraj2 = xtraj.shiftTime(breaks(end));
-      %   xtraj = xtraj.append(xtraj2);
-      % end
     end
 
     function draw(obj, h)
       trajs = obj.extractTrajectories();
       ts = linspace(obj.breaks(1), obj.breaks(end), 100);
-      % figure(h);
-      % clf;
-      % hold on
-      % for j = 1:obj.num_hands
-      %   x = ppval(trajs.hand(j), ts);
-      %   plot3(x(1,:), x(2,:), x(3,:), 'b.-');
-      %   % plot(ts, ppval(trajs.hand(j), ts), 'b.-');
-      % end
-      % for j = 1:obj.num_balls
-      %   x = ppval(trajs.ball(j), ts);
-      %   plot3(x(1,:), x(2,:), x(3,:), 'ro-');
-      %   % plot(ts, ppval(trajs.ball(j), ts), 'ro-');
-      % end
 
       hand_colors = {'b', 'k', 'y'};
       figure(2)
@@ -285,11 +267,15 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       hold on
       for i = 1:obj.num_balls
         x = ppval(trajs.ball(i), ts);
-        plot(ts, x(3,:), 'r.-');
+        plot(ts, x(3,:), 'r-');
+        x = ppval(trajs.ball(i), obj.breaks);
+        plot(obj.breaks, x(3,:), 'ro');
       end
       for j = 1:obj.num_hands
         x = ppval(trajs.hand(j), ts);
         plot(ts, x(3,:), 'b-', 'Color', hand_colors{j});
+        x = ppval(trajs.hand(j), obj.breaks);
+        plot(obj.breaks, x(3,:), 'b.');
       end
       subplot(212)
       hold on
