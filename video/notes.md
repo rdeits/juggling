@@ -18,4 +18,10 @@ switched to L1 norm instead of L2 norm
 10 frames, cyclic
 3_balls_cyclic_symmetric.mov
 
+# 2014-11-22
+16 frames, periodic, each ball in its own y-plane, 0.5 speed, 90 seconds to solve to first feasible solution (not optimal)
+5_ball_periodic_halfspeed.mov
+5_ball_periodic_side_view_quarterspeed.mov
+
+
 

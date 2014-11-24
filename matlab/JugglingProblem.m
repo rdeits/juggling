@@ -52,13 +52,16 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       obj = obj.addHandRanges();
       obj = obj.addContactConstraints();
       % obj = obj.addBallRange();
+      obj = obj.addBallPlanes();
       obj = obj.addPeriodicity();
 
-      % for j = 1:obj.num_hands
-      %   obj = obj.addSymbolicConstraints([...
-      %     1 <= sum(sum(obj.vars.contact.symb(:,j,:))) <= obj.num_frames-2,...
-      %     ]);
-      % end
+      for j = 1:obj.num_hands
+        for i = 1:obj.num_balls
+          obj = obj.addSymbolicConstraints([...
+            1 <= sum(obj.vars.contact.symb(i,j,:)) <= obj.num_frames-2,...
+            ]);
+        end
+      end
 
 
       for j = 1:obj.num_hands
@@ -98,11 +101,16 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           ]);
       end
       for i = 1:obj.num_balls
-        next = mod(i, obj.num_balls)+1;
-        % next = i;
+        % next = mod(i, obj.num_balls)+1;
+        next = i;
+        x0 = ppval(obj.ball_traj(i), obj.breaks(1));
+        x1 = ppval(obj.ball_traj(next), obj.breaks(end));
+        xd0 = ppval(fnder(obj.ball_traj(i), 1), obj.breaks(1));
+        xd1 = ppval(fnder(obj.ball_traj(next), 1), obj.breaks(end));
+        ind = [1,2,3];
         obj = obj.addSymbolicConstraints([...
-          ppval(obj.ball_traj(i), obj.breaks(1)) == ppval(obj.ball_traj(next), obj.breaks(end)),...
-          ppval(fnder(obj.ball_traj(i), 1), obj.breaks(1)) == ppval(fnder(obj.ball_traj(next), 1), obj.breaks(end)),...
+          x0(ind) == x1(ind),...
+          xd0(ind) == xd1(ind),...
           ]);
       end
     end
@@ -132,15 +140,6 @@ classdef JugglingProblem < MixedIntegerConvexProgram
           obj.symbolic_constraints = [obj.symbolic_constraints,...
             obj.ball_mass * ball_accel_coefs == total_force_coefs,...
             ];
-        end
-      end
-    end
-
-    function obj = addInitialState(obj)
-      for j = 1:obj.num_hands
-        for k = 1:obj.num_frames-1
-          obj.symbolic_constraints = [obj.symbolic_constraints,...
-            ppval(obj.hand_traj(j), 0) == obj.hand_ranges(j).center];
         end
       end
     end
@@ -176,6 +175,16 @@ classdef JugglingProblem < MixedIntegerConvexProgram
             % [-1; -1; 0] <= x1,...
             % x1 <= [2; 1; inf],...
             ];
+        end
+      end
+    end
+
+    function obj = addBallPlanes(obj)
+      for k = 1:obj.num_frames-1
+        for i = 1:obj.num_balls
+          x0 = ppval(obj.ball_traj(i), (k-1)*obj.dt);
+          obj = obj.addSymbolicConstraints([...
+            x0(2) == (i - obj.num_balls/2) * 0.02]);
         end
       end
     end
@@ -218,7 +227,7 @@ classdef JugglingProblem < MixedIntegerConvexProgram
         coefs = vertcat(coefs, c2);
         [~, c2, l, k, d] = unmkpp(trajs.hand_contact(j));
         c2 = reshape(c2, [d, l, k]);
-        c2 = cat(3, c2, zeros(1, length(breaks)-1, 2));
+        c2 = cat(3, zeros(1, length(breaks)-1, 2), c2);
         coefs = vertcat(coefs, c2);
       end
 
@@ -229,14 +238,14 @@ classdef JugglingProblem < MixedIntegerConvexProgram
         new_breaks = new_breaks + (breaks(end)-breaks(1));
 
         new_coefs = base_coefs;
-        for i = 1:obj.num_balls
-          if i == 1
-            prev = obj.num_balls;
-          else
-            prev = i - 1;
-          end
-          new_coefs(obj.dim*(i-1) + (1:obj.dim),:,:) = base_coefs(obj.dim*(prev-1) + (1:obj.dim),:,:);
-        end
+        % for i = 1:obj.num_balls
+        %   if i == 1
+        %     prev = obj.num_balls;
+        %   else
+        %     prev = i - 1;
+        %   end
+        %   new_coefs(obj.dim*(i-1) + (1:obj.dim),:,:) = base_coefs(obj.dim*(prev-1) + (1:obj.dim),:,:);
+        % end
         base_coefs = new_coefs;
         coefs = horzcat(coefs, new_coefs);
         breaks = horzcat(breaks, new_breaks(2:end));
@@ -269,7 +278,7 @@ classdef JugglingProblem < MixedIntegerConvexProgram
       %   % plot(ts, ppval(trajs.ball(j), ts), 'ro-');
       % end
 
-      hand_colors = {'b', 'k'};
+      hand_colors = {'b', 'k', 'y'};
       figure(2)
       clf
       subplot(211)
