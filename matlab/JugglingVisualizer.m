@@ -3,8 +3,8 @@ classdef JugglingVisualizer < Visualizer
     num_hands;
     num_balls;
     inputFrame;
-    hand_colors = {'b', 'k', 'y'};
-    ball_colors = {'r', 'm', 'g', 'c', [1,.8, .2]};
+    hand_colors = jet(10);
+    ball_colors = lines();
   end
 
   methods
@@ -55,15 +55,15 @@ classdef JugglingVisualizer < Visualizer
 
       for j = 1:obj.num_hands
         if p.(sprintf('hand_%d_contact', j))
-          style = {'Color', obj.hand_colors{j}, 'MarkerSize', 15};
+          style = {'Color', obj.hand_colors(j,:), 'MarkerSize', 15};
         else
-          style = {'Color', obj.hand_colors{j}, 'MarkerSize', 10};
+          style = {'Color', obj.hand_colors(j,:), 'MarkerSize', 10};
         end
         plot3(p.(sprintf('hand_%d_x', j)), p.(sprintf('hand_%d_y', j)), p.(sprintf('hand_%d_z', j)), 'bo', style{:});
       end
 
       for i = 1:obj.num_balls
-        plot3(p.(sprintf('ball_%d_x', i)), p.(sprintf('ball_%d_y', i)), p.(sprintf('ball_%d_z', i)), 'ro', 'Color', obj.ball_colors{i}, 'MarkerFaceColor', obj.ball_colors{i}, 'MarkerSize', 8);
+        plot3(p.(sprintf('ball_%d_x', i)), p.(sprintf('ball_%d_y', i)), p.(sprintf('ball_%d_z', i)), 'ro', 'Color', obj.ball_colors(i,:), 'MarkerFaceColor', obj.ball_colors(i,:), 'MarkerSize', 8);
       end
 
       xlim([0, 1])
