@@ -1,4 +1,4 @@
-function obj = runJuggling(num_balls, num_hands, num_time_steps, dt);
+function obj = runJuggling(num_balls, num_hands, num_time_steps, dt)
 
 if nargin < 4
   dt = 0.3;
